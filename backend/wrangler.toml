@@ -1,0 +1,12 @@
+name = "poe2-overlay-api"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+# Secrets (set via `wrangler secret put`, never committed):
+#   GGG_CLIENT_ID     - confidential OAuth client id (once granted by GGG)
+#   GGG_CLIENT_SECRET - confidential OAuth client secret
+#
+# Without these secrets the worker serves the poe2scout fallback.
+
+[observability]
+enabled = true

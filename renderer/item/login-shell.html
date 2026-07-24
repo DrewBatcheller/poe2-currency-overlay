@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #14110d; font: 13px "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  #bar {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 8px;
+    border-bottom: 1px solid rgba(214, 126, 44, 0.3);
+  }
+  button {
+    appearance: none;
+    background: rgba(214, 126, 44, 0.1);
+    border: 1px solid rgba(214, 126, 44, 0.3);
+    border-radius: 6px;
+    color: #e8c88a;
+    font-size: 14px;
+    width: 30px;
+    height: 26px;
+    cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: rgba(214, 126, 44, 0.22); }
+  button:disabled { opacity: 0.35; cursor: default; }
+  #url {
+    flex: 1;
+    color: #8a8372;
+    font-size: 11.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    direction: ltr;
+  }
+</style>
+</head>
+<body>
+  <div id="bar">
+    <button id="back" title="Back">&#8592;</button>
+    <button id="fwd" title="Forward">&#8594;</button>
+    <button id="home" title="Back to the login page">&#8962;</button>
+    <span id="url"></span>
+  </div>
+  <script src="login-shell-client.js"></script>
+</body>
+</html>

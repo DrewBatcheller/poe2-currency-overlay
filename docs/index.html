@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>POE2 Overlay - Prices, Price Check &amp; Desecrate EV</title>
+<meta name="description" content="Open-source overlay for Path of Exile 2: live currency exchange rates and arbitrage, an item price checker (fungible mods, pseudo resistances, sockets, catalyst quality), and a Desecrate EV calculator.">
+<link rel="icon" type="image/png" href="icon.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #14110d;
+    color: #c8c2b2;
+    font: 16px/1.6 "Segoe UI", system-ui, sans-serif;
+    padding: 32px 20px 60px;
+  }
+  main { max-width: 1000px; margin: 0 auto; }
+  a { color: #d67e2c; }
+  .hero { text-align: center; max-width: 600px; margin: 0 auto 8px; }
+  .hero img { width: 108px; height: 108px; margin-bottom: 12px; filter: drop-shadow(0 6px 22px rgba(214,126,44,.35)); }
+  h1 { color: #e8c88a; font-size: 34px; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .tag { color: #a89f8c; margin-bottom: 26px; font-size: 17px; }
+  .btn {
+    display: inline-block;
+    background: linear-gradient(180deg, #e0a050, #c07828);
+    color: #1a1410; font-weight: 700; font-size: 19px;
+    padding: 14px 42px; border-radius: 8px; text-decoration: none;
+    box-shadow: 0 4px 18px rgba(214, 126, 44, .35);
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn2 {
+    display: inline-block; margin-top: 14px; color: #e8c88a;
+    border: 1px solid rgba(214,126,44,.5); border-radius: 8px;
+    padding: 9px 24px; text-decoration: none; font-size: 15px; font-weight: 600;
+  }
+  .btn2:hover { background: rgba(214,126,44,.14); color: #f0d9a8; }
+  .sub { font-size: 13px; color: #7a7466; margin-top: 10px; }
+
+  /* short feature callouts */
+  .callouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 40px 0 8px; }
+  .callout { background: rgba(29,24,18,.5); border: 1px solid rgba(214,126,44,.22); border-radius: 10px; padding: 15px 17px; }
+  .callout h3 { color: #e8c88a; font-size: 15px; margin-bottom: 4px; }
+  .callout p { color: #a89f8c; font-size: 13.5px; line-height: 1.5; }
+
+  /* feature sections */
+  .feature { display: grid; grid-template-columns: 1fr 470px; gap: 40px; align-items: center; margin: 62px 0; }
+  .feature.flip { grid-template-columns: 470px 1fr; }
+  .feature.flip .copy { order: 2; }
+  .feature .copy .kicker { color: #d67e2c; font-size: 12px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; }
+  .feature .copy h2 { color: #e8c88a; font-size: 25px; margin: 4px 0 12px; }
+  .feature .copy p { color: #bdb7a7; margin-bottom: 12px; }
+  .feature .copy b { color: #f0d9a8; font-weight: 600; }
+  .feature ul { list-style: none; margin: 0; }
+  .feature li { padding: 3px 0 3px 18px; position: relative; color: #bdb7a7; font-size: 14.5px; }
+  .feature li::before { content: "◆"; color: #d67e2c; font-size: 9px; position: absolute; left: 0; top: 7px; }
+  .shot-wrap { text-align: center; }
+  .shot-wrap img { max-width: 100%; border: 1px solid rgba(214,126,44,.3); border-radius: 10px; box-shadow: 0 10px 34px rgba(0,0,0,.45); }
+  .shot-wrap .cap { font-size: 12px; color: #8a8478; margin-top: 8px; }
+  .gold { color: #d8b06a; } .green { color: #7ec46a; } .red { color: #e08a7a; } .blue { color: #8db4d0; } .des { color: #a7ff4a; }
+
+  .divider { border: none; border-top: 1px solid rgba(214,126,44,.14); margin: 10px 0; }
+  .foot-links { text-align: center; margin: 44px 0 10px; }
+  footer { margin-top: 18px; font-size: 12px; color: #6f6a5e; text-align: center; }
+  a.gh { color: #d67e2c; text-decoration: none; border-bottom: 1px solid rgba(214,126,44,.4); }
+  a.gh:hover { color: #e8c88a; }
+  details.verify { max-width: 600px; margin: 26px auto 0; font-size: 13px; color: #a89f8c; text-align: center; }
+  details.verify pre { background:#1d1812; border:1px solid rgba(214,126,44,.3); border-radius:6px; padding:10px; font-size:11.5px; overflow-x:auto; text-align:left; }
+
+  @media (max-width: 900px) {
+    .feature, .feature.flip { grid-template-columns: 1fr; gap: 20px; justify-items: center; }
+    .feature.flip .copy { order: 0; }
+    .shot-wrap img { width: 100%; max-width: 470px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="hero">
+    <img src="icon.png" alt="POE2 Overlay logo">
+    <h1>POE2 Overlay</h1>
+    <p class="tag">A Path of Exile 2 overlay for live currency exchange rates, item price checks against live trade listings, and a Desecrate EV calculator.</p>
+
+    <a class="btn" href="https://github.com/POE2-VibeTools/poe2-currency-overlay/releases/latest/download/POE2-Currency-Overlay-Setup.exe">
+      &#8595; Download for Windows
+    </a>
+    <p class="sub">Free &amp; open source &middot; one-click install &middot; ~95 MB &middot; no account, no game hooks<br>
+    Unsigned build: if SmartScreen appears, choose "More info &rarr; Run anyway".</p>
+    <div><a class="btn2" href="faq.html">&#128214; How it works &amp; FAQ</a></div>
+  </div>
+
+  <!-- ============ PRICE CHECK ============ -->
+  <section class="feature">
+    <div class="copy">
+      <div class="kicker">Price Check &middot; Ctrl+F</div>
+      <h2>Prices your item by its stats, not its exact mod text</h2>
+      <p>Hover an item in game and press <b>Ctrl+F</b>: it is parsed, filtered, and priced against live listings. How it searches:</p>
+      <ul>
+        <li><b>Fungible</b> added-damage rolls match across elements - your fire+lightning glove is comparable to a fire+cold one.</li>
+        <li>Resistances fold into a <b>pseudo total</b> (with an empty chaos pseudo when chaos is present), exactly like the trade site's own pseudo stats.</li>
+        <li>Item level, quality and <b>Augmentable Sockets</b> are range filters in the header, defaulted to your item, so a 2-socket item is not priced against 1-socket junk.</li>
+        <li>Catalyst quality, weapon DPS, and Runic Ward are all accounted for.</li>
+        <li>A <b>Suggested floor</b> anchored on the cheapest genuine comparable - for weapons, scaled by how your DPS compares - so a mispriced outlier doesn't set your price.</li>
+      </ul>
+    </div>
+    <div class="shot-wrap">
+      <img src="img/pricecheck.png" alt="Price Check tab: a rare Gemini Bow priced by total DPS, with item-level and socket filters, mod sliders, and a suggested floor of 52 divine anchored on a cheaper, higher-DPS listing.">
+      <div class="cap">A bow priced on <b>total DPS</b>: the floor lands at <span class="gold">52 div</span>, scaled down from a cheaper listing that out-DPSes it.</div>
+    </div>
+  </section>
+
+  <section class="feature flip">
+    <div class="copy">
+      <div class="kicker">Price Check &middot; hover a result</div>
+      <h2>Every comp compared to your item, line by line</h2>
+      <p>Comparing near-identical items usually means reading two mod lists and doing the math by hand. Hover a result and it lays the comparison out:</p>
+      <ul>
+        <li>Every shared mod shows a <span class="green">green +X</span> when your roll wins, <span class="red">red &minus;X</span> when the listing beats you.</li>
+        <li><b>Quality</b>, the defence totals (<b>ES / Armour / Evasion / Runic Ward</b>), <b>Total Resistance</b> and <b>Sockets</b> are totalled next to yours - no adding up rolls by hand.</li>
+        <li>Crafted, <span class="des">desecrated</span>, and fractured lines use the game's own colours, so you can see how a comp was made.</li>
+      </ul>
+    </div>
+    <div class="shot-wrap">
+      <img src="img/peek-compare.png" alt="Hover comparison card: a comp's Quality, Energy Shield 719, Total Resistance 59 and Sockets totalled against yours with green and red deltas, over per-line over/under and a green desecrated mod.">
+      <div class="cap">One comp on hover: Quality, defences, resistance and sockets vs yours, each line's <span class="green">+</span>/<span class="red">&minus;</span>, and a <span class="des">desecrated</span> line in the game's own green.</div>
+    </div>
+  </section>
+
+  <!-- ============ DESECRATE ============ -->
+  <section class="feature">
+    <div class="copy">
+      <div class="kicker">Desecrate &middot; Omen of Light EV</div>
+      <h2>Is re-rolling a desecrated mod with Omens of Light worth it?</h2>
+      <p>Re-rolling a desecrated slot is hard to price out - odds, bones, omens, annulments and echoes all stack up. The Desecrate tab works out the expected value for each route.</p>
+      <ul>
+        <li>Tick the <b>outcomes you'd keep</b> and the worst tier you'd accept; each is weighted by its <b>real spawn chance</b>.</li>
+        <li>It prices your item as it stands and with a hit, autofills costs from live rates, and compares the <b>Preserved</b> and <b>Ancient</b> routes.</li>
+        <li>Expected bones, expected cost, and <b>net EV per route</b> - ending in a plain verdict: worth it, or not.</li>
+      </ul>
+    </div>
+    <div class="shot-wrap">
+      <img src="img/desecrate.png" alt="Desecrate tab as a numbered pipeline: the item and its rerolled mod, the list of reroll outcomes to tick, live consumable costs, and a per-route EV table.">
+      <div class="cap">The pipeline: the item and its rerolled mod, the outcomes to keep, live costs, and the <b>EV per route</b>.</div>
+    </div>
+  </section>
+
+  <!-- ============ CURRENCY ============ -->
+  <section class="feature flip">
+    <div class="copy">
+      <div class="kicker">Currency &middot; F6</div>
+      <h2>Live exchange rates, trends, and arbitrage</h2>
+      <p>Press <b>F6</b> and prices float over your game. Build <b>buckets</b> - a currency you want to buy, priced in every currency you'd pay with.</p>
+      <ul>
+        <li>Rates from <b>GGG's official Currency Exchange</b> - real executed trades - topped with the live order book for the pairs on screen.</li>
+        <li>A green <b>BEST</b> badge marks the cheapest way to buy each thing; the other rows show how much more they cost.</li>
+        <li>A green <b>arb %</b> flags profitable trade loops - hover for the route step by step, pin it, copy it.</li>
+        <li>7-day sparklines with hoverable history; type your own rate to override any pair.</li>
+      </ul>
+    </div>
+    <div class="shot-wrap">
+      <img src="img/example-bucket.png" alt="Currency tab: buckets for four Chaotic Omens, each priced in Exalted, Chaos and Divine, with a green BEST row marking the cheapest payment and green arbitrage percentages.">
+      <div class="cap">Buckets for four Omens - the green <b>BEST</b> row is the cheapest way to pay, and a green <b>arb %</b> flags a profitable loop.</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+  <div class="foot-links">
+    <a class="btn" href="https://github.com/POE2-VibeTools/poe2-currency-overlay/releases/latest/download/POE2-Currency-Overlay-Setup.exe">&#8595; Download for Windows</a>
+    <p style="margin-top:16px;"><a class="gh" href="faq.html">How it works &amp; FAQ</a> &middot;
+    <a class="gh" href="changelog.html">Changelog</a> &middot;
+    <a class="gh" href="https://github.com/POE2-VibeTools/poe2-currency-overlay">Source &amp; issues on GitHub</a></p>
+  </div>
+
+  <details class="verify">
+    <summary style="cursor:pointer; color:#d67e2c;">Verify your download</summary>
+    <p style="margin:10px 0 6px;">Only download from this page or the GitHub releases. To confirm your installer is authentic,
+    compare its SHA-256 hash against <code>checksums.txt</code> attached to the
+    <a class="gh" href="https://github.com/POE2-VibeTools/poe2-currency-overlay/releases/latest">latest release</a>:</p>
+    <pre>certutil -hashfile "POE2-Currency-Overlay-Setup.exe" SHA256</pre>
+    <p style="margin-top:6px;">If the hashes differ, the file is not from us - delete it.</p>
+  </details>
+
+  <footer>GPL-3.0 licensed. Currency via GGG's official exchange data + poe2scout.com (community API).
+  Item parser adapted from Exiled Exchange 2 (MIT). Not affiliated with Grinding Gear Games.</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>POE2 Overlay - How it works &amp; FAQ</title>
+<meta name="description" content="How the POE2 Overlay works: the price checker's fungible mods, pseudo resistances, and Highly-similar vs Similar comps; the Desecrate EV calculator; and the currency exchange, arbitrage, and manual rates.">
+<link rel="icon" type="image/png" href="icon.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #14110d;
+    color: #c8c2b2;
+    font: 16px/1.65 "Segoe UI", system-ui, sans-serif;
+    padding: 40px 24px 80px;
+  }
+  main { max-width: 720px; margin: 0 auto; }
+  .top { text-align: center; margin-bottom: 30px; }
+  .top img { width: 84px; height: 84px; filter: drop-shadow(0 6px 22px rgba(214,126,44,.35)); margin-bottom: 10px; }
+  h1 { color: #e8c88a; font-size: 30px; }
+  .back { display: inline-block; margin-top: 10px; color: #d67e2c; text-decoration: none; font-size: 14px; border-bottom: 1px solid rgba(214,126,44,.4); }
+  .back:hover { color: #e8c88a; }
+  .callout {
+    background: linear-gradient(180deg, rgba(224,160,80,.14), rgba(192,120,40,.08));
+    border: 1px solid rgba(214,126,44,.45);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+  .callout h2 { color: #f0d9a8; font-size: 18px; margin-bottom: 6px; }
+  .sect { color: #e8c88a; font-size: 22px; margin: 40px 0 6px; padding-bottom: 6px; border-bottom: 1px solid rgba(214,126,44,.25); }
+  .sect:first-of-type { margin-top: 26px; }
+  .sect-intro { color: #a89f8c; font-size: 14.5px; margin-bottom: 16px; }
+  .body ul { margin: 4px 0 8px 4px; list-style: none; }
+  .body li { color: #bdb7a7; padding: 2px 0 2px 16px; position: relative; }
+  .body li::before { content: "◆"; color: #d67e2c; font-size: 8px; position: absolute; left: 0; top: 8px; }
+  .body .ex { background: rgba(29,24,18,.7); border-left: 2px solid rgba(214,126,44,.5); border-radius: 0 6px 6px 0; padding: 8px 12px; margin: 8px 0; font-size: 14px; color: #cfc8b6; }
+
+  /* the anchor example screenshot at the top */
+  .shot { margin: 0 auto 8px; display: block; max-width: 100%; border: 1px solid rgba(214,126,44,.35); border-radius: 8px; }
+  .shot-cap { font-size: 12.5px; color: #8a8478; text-align: center; margin-bottom: 26px; }
+
+  /* accordions */
+  details {
+    border: 1px solid rgba(214,126,44,.22);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: rgba(29,24,18,.5);
+    overflow: hidden;
+  }
+  details[open] { border-color: rgba(214,126,44,.45); }
+  summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 14px 18px;
+    color: #e8c88a;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before {
+    content: "+";
+    color: #d67e2c;
+    font-weight: 700;
+    width: 14px;
+    display: inline-block;
+    text-align: center;
+    transition: transform .15s ease;
+  }
+  details[open] summary::before { content: "\2013"; }
+  summary:hover { color: #f0d9a8; }
+  .body { padding: 0 18px 16px; }
+  .body p { color: #bdb7a7; margin-bottom: 8px; }
+  b { color: #f0d9a8; font-weight: 600; }
+  .gold { color: #d8b06a; }
+  .green { color: #6fbf5a; }
+  .blue { color: #8db4d0; }
+  code { background: #14110d; border: 1px solid rgba(214,126,44,.3); border-radius: 4px; padding: 1px 5px; font-size: 13px; color: #d8d4c8; }
+  footer { margin-top: 34px; font-size: 12px; color: #6f6a5e; text-align: center; }
+  a.gh { color: #d67e2c; text-decoration: none; border-bottom: 1px solid rgba(214,126,44,.4); }
+  a.gh:hover { color: #e8c88a; }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <img src="icon.png" alt="POE2 Currency Overlay logo">
+    <h1>Frequently Asked Questions</h1>
+    <a class="back" href="./">&larr; Back to download</a>
+  </div>
+
+  <div class="callout">
+    <h2>New here? Run the tutorial first.</h2>
+    <p>The first time you open the overlay, a short guided tour walks you through all three tabs - building a currency bucket,
+    then spotlighting the Price Check and Desecrate tabs on a demo item. Want a
+    refresher, or just one tab? Open <b>&#9881; Settings &rarr; Help &amp; About &rarr; Replay tutorial</b> and pick a section any time. This FAQ covers
+    the same ground in depth - tap a question to expand it.</p>
+  </div>
+
+  <!-- =================== PRICE CHECK =================== -->
+  <h2 class="sect">Price Check</h2>
+  <p class="sect-intro">Hover an item in game and press <b>Ctrl+F</b>: it is parsed, filtered, and priced against live
+  trade listings. It matches on the item's value - fungible rolls, total resistance, defences - rather than exact mod
+  text. How that works:</p>
+
+  <img class="shot" src="img/pricecheck.png" alt="Price Check tab: a rare Gemini Bow priced by total DPS, with item-level and socket range filters, mod sliders, and a suggested floor of 52 divine anchored on a cheaper, higher-DPS listing.">
+  <div class="shot-cap">A bow read as <b>total DPS</b>, with header filters for item level and sockets and a <span class="green">suggested floor</span> anchored on the cheapest genuine comp. Each idea below.</div>
+
+  <details open>
+    <summary>How do I price-check an item?</summary>
+    <div class="body">
+      <p>Hover the item in game and press your <b>price-check hotkey</b> (default <b>Ctrl+F</b>). The overlay opens with
+      the item parsed and priced, and stays until you hide it. <b>Ctrl+Alt+F</b> is a <b>quick check</b> that hides
+      itself the moment your mouse leaves the overlay - so you can glance and get straight back to the game, then quick-check
+      the next item without clicking back in.</p>
+      <p>No overlay open, or pricing from outside the game? Copy any item with <b>Ctrl+C</b> and <b>Ctrl+V</b> paste it onto
+      the Price Check tab.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>What does <span class="blue">FUNGIBLE</span> mean on a mod?</summary>
+    <div class="body">
+      <p>Some rolls are interchangeable, and pricing them as if they must match exactly would hide half the market.
+      <b>Added elemental damage to attacks</b> is the clearest case: for most builds, added <b>fire</b>, <b>cold</b>, and
+      <b>lightning</b> damage are the same thing. So the app does not demand your exact elements on comparables - it treats
+      them as one pool and ranks by the <b>combined total</b>.</p>
+      <div class="ex">Your glove rolls <b>Adds Fire</b> + <b>Adds Lightning</b> damage. A listing with <b>Adds Fire</b> +
+      <b>Adds Cold</b> of similar total is a real comparable, and the app finds it - a plain text search never would.
+      Added <b>physical</b> damage is its own pool (weighted a little higher, as it is in game).</div>
+      <p>You can make other mods fungible too, or group them yourself, from a mod's <b>&#8942;</b> menu.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>How do resistances become one <span class="blue">PSEUDO</span> line?</summary>
+    <div class="body">
+      <p>Nobody prices a resistance item element by element - they price the <b>total</b>. The trade site has "pseudo"
+      stats for exactly this, and the app uses the real ones. Every resistance line on your item folds into a single
+      <b>+N% total Resistance</b> pseudo:</p>
+      <ul>
+        <li>each single resistance adds its value;</li>
+        <li><b>+X% to all Elemental Resistances</b> counts as <b>3X</b> (it is three resistances);</li>
+        <li>a dual like <b>+X% to Lightning and Chaos Resistances</b> counts as <b>2X</b> (two resistances);</li>
+        <li>chaos resistance is included in the total.</li>
+      </ul>
+      <div class="ex">Fire 40 + Lightning 28 + a desecrated <b>Lightning and Chaos</b> 16 = <b>100% total</b>
+      (16 counts twice). One clean pseudo line instead of four separate filters that would miss most comps.</div>
+      <p>When your item has <b>any</b> chaos resistance, a second <b>+#% to Chaos Resistance</b> pseudo rides along with an
+      <b>empty minimum</b>. It just requires chaos to <b>exist</b> on a comp (the amount is your call) - because chaos res is
+      scarce and a comp that has it is strictly better competition. The individual resistance lines stay <b>folded and off</b>
+      beneath the pseudo; expand them and flip one on any time you want to search a specific element instead.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>How does it pick the comps it prices against?</summary>
+    <div class="body">
+      <p>Two items with overlapping mods are not always the same <b>product</b>. A rare ring can be a spell-damage ring, an
+      attribute stacker, or a life/res ring - all on the same base, all matching a loose search. Lumping them together
+      gives a garbage price.</p>
+      <p>So the app builds a <b>profile</b> of your item - its damage types and the shape of its stats - and ranks the
+      <b>genuine comparables</b> first: a spell-damage ring beside other spell-damage rings, an added-elemental glove
+      beside other added-elemental gloves, rather than whatever merely matched your filters.</p>
+      <p>The <b>suggested floor</b> then anchors on the cheapest of those genuine comparables - and for <b>weapons</b> it
+      reads total DPS, where price scales steeply, so an item trailing a cheaper high-DPS one is priced below it, not above.
+      Hover the floor for the short receipt of which listing it anchored on and why. This matters most where one base rolls
+      wildly different builds: <b>rings, gloves, and weapons</b>.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>Every mod is a filter - min, max, sliders, and presets</summary>
+    <div class="body">
+      <p>Each mod line is a search filter. The number shown is the <b>minimum</b> the search uses; the range in brackets is
+      the roll range for that tier, and the slider spans every tier the mod can roll. By default only the minimum is set
+      (never a maximum - a max would hide better items), lowered slightly so you see a real band of comps, not just exact matches.</p>
+      <ul>
+        <li><b>tier min</b> - set every mod to the lowest roll of its own tier (Divine Orbs reroll within a tier, so the tier matters more than the exact number);</li>
+        <li><b>exact roll</b> - the strictest search: comps must match or beat your item on every line;</li>
+        <li><b>&#8635; reset</b> - back to the item as parsed.</li>
+      </ul>
+      <p>Turn a line <b>off</b> to ignore it, type a <b>max</b> to bracket a roll, or <b>+ Add a mod</b> to search for one the
+      item does not have yet (a desecrate target, a craft you are planning). Unique items search a band-scaled minimum so you
+      are not matching every copy ever dropped.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>Sockets, catalyst quality, DPS and other properties</summary>
+    <div class="body">
+      <p>Above the mods sit the item's <b>properties</b> - the numbers the game computes, which mod filters can't express:</p>
+      <ul>
+        <li><b>Armour / Evasion / Energy Shield / Runic Ward</b>, normalized to 20% quality, with empty rune sockets valued as Greater Iron Runes;</li>
+        <li><b>Item level</b>, <b>quality</b> and <b>Augmentable Sockets</b> are range filters in the header, each defaulted to your item's own value - so a 2-socket item is not priced against 1-socket ones;</li>
+        <li>weapons search total <b>DPS</b> (and physical / elemental DPS) rather than each damage line;</li>
+        <li><b>catalyst quality</b> on jewellery is read and applied, so a ring whose resistances read high because of a catalyst is priced on its real, boosted numbers.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary>The <b>Miscellaneous</b> section (corrupted / crafted / fractured)</summary>
+    <div class="body">
+      <p>Fracturable stats roll perfectly, so the <b>failed</b> attempts - corrupted, crafted, unfractured versions of the
+      same item - flood the market cheaply and drag a good item's price down. The Miscellaneous accordion is the trade site's
+      own filters: toggle <b>Corrupted, Crafted, Desecrated, Fractured, Twice Corrupted, Sanctified, Mirrored</b> to Yes/No so
+      those junk comps drop out of your comparison.</p>
+      <p>It also holds <b>Listings</b>, which defaults to <b>Instant Buyout</b> - the same as the in-game Market. This is
+      important: the wider options include old stash-tab listings that are often months stale and already sold, and since
+      results sort cheapest-first, one dead listing can become your suggested price. Instant Buyout prices you against what
+      you can actually buy right now.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>What does the hover comparison card show?</summary>
+    <div class="body">
+      <img class="shot" src="img/peek-compare.png" alt="Hover card: a comp's Quality, Energy Shield, Total Resistance and Sockets totalled against yours, with per-line green and red deltas and coloured crafted and desecrated mods." style="max-width:340px;">
+      <div class="shot-cap">One comp on hover - totals vs yours, and every line's over/under.</div>
+      <p>Hover any result and the app compares it to your item for you, instead of making you read two lists:</p>
+      <ul>
+        <li>every shared mod shows a <span class="green">green +X</span> when your roll wins, <span class="red">red &minus;X</span> when the listing beats you;</li>
+        <li><b>Quality</b>, the defence totals (<b>Energy Shield / Armour / Evasion / Runic Ward</b>), <b>Total Resistance</b> and <b>Sockets</b> are totalled next to yours - the aggregates that don't belong on any single line;</li>
+        <li>crafted (blue), <span class="green">desecrated</span> (green), and fractured (tan) lines use the game's own colours, so you can see how a comp was made.</li>
+      </ul>
+      <p>Click a result to <b>pin</b> its card so it stays while you read; whisper-copy is one click from the card.</p>
+    </div>
+  </details>
+
+  <!-- =================== DESECRATE =================== -->
+  <h2 class="sect">Desecrate</h2>
+  <p class="sect-intro">Re-rolling a desecrated slot with Omens of Light is hard to price out - odds, bones, omens,
+  annulments and echoes all stack up. The Desecrate tab works out the expected profit per route, and a plain verdict.</p>
+
+  <img class="shot" src="img/desecrate.png" alt="Desecrate tab as a numbered pipeline: the item and its rerolled mod, the list of reroll outcomes to tick, live consumable costs, and a per-route EV table.">
+  <div class="shot-cap">The pipeline: the item, the outcomes to tick, live costs, and the routes - tick your hits and each resolves to an expected profit.</div>
+
+  <details open>
+    <summary>What is the Desecrate tab, and the <b>redesecrate?</b> button?</summary>
+    <div class="body">
+      <p>Any item with a <b>desecrated</b> modifier shows a green <b>redesecrate?</b> link in the corner of its Price Check
+      card. It opens the Desecrate tab, which answers one question: <b>is spamming Omens of Light to re-roll that mod worth
+      the currency?</b> You can also copy any item straight onto the tab.</p>
+      <p>A cycle is: an <b>Omen of Light + Orb of Annulment</b> strips the desecrated mod, then a <b>bone</b> offers three
+      fresh picks on that slot - and an <b>Omen of Abyssal Echoes</b> re-rolls a whiffed set, for six looks per cycle.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>How does the expected-value math work?</summary>
+    <div class="body">
+      <p>You tell it what a win looks like; it does the probability and the money.</p>
+      <ul>
+        <li><b>Pick your hits</b> - tick the outcomes you would happily keep, and the <b>worst tier</b> you would accept for each.
+        Every possible outcome on that slot is weighted by its <b>real spawn chance</b>, so "a hit" means an outcome you would
+        actually stop on, not just any change.</li>
+        <li><b>Values</b> - the app auto-prices your item as it stands, and with a hit (one search over your ticked set), or you
+        can type either. <b>Costs</b> autofill from live exchange rates and are fully editable.</li>
+        <li><b>Routes</b> - it computes, per route: your <b>chance of a hit per reveal</b>, the <b>expected bones</b> to land one,
+        the <b>expected total cost</b>, and the <b>net EV</b> - what you make (or lose) on average.</li>
+      </ul>
+      <p>The green (or red) banner at the bottom is the bottom line: which route is best, and its expected profit.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>Preserved, Ancient, and Altered routes</summary>
+    <div class="body">
+      <p>Different bones change the odds, so the app prices each:</p>
+      <ul>
+        <li><b>Preserved</b> - any item level; the base gamble.</li>
+        <li><b>Ancient</b> - forces the re-rolled mod to level 40+, tilting the pool toward the higher tiers (usually the better
+        route when you want a top-tier hit).</li>
+        <li><b>Altered</b> - accessories only; it rolls the <b>otherworldly</b> pool, and the app prices that pool directly, so
+        the route's odds are worked out for you rather than typed in. Tick an otherworldly outcome and it flags the Altered bone.</li>
+      </ul>
+      <p>Regular jewels desecrate through a single <b>Preserved Cranium</b> route (there is no Ancient or Altered Cranium),
+      priced the same way. Abyssal Echoes (six looks per cycle instead of three) is assumed throughout, and its cost is folded
+      into every route - it is consumed before the reveal, so it is a flat per-cycle cost, not an option.</p>
+    </div>
+  </details>
+
+  <!-- =================== CURRENCY =================== -->
+  <h2 class="sect">Currency</h2>
+  <p class="sect-intro">Press <b>F6</b> and live prices float over your game. Build <b>buckets</b> to watch the exchange, spot
+  arbitrage loops, and track trends.</p>
+
+  <img class="shot" src="img/example-bucket.png" alt="Currency tab: buckets for four Chaotic Omens, each priced in Exalted, Chaos and Divine, with a green BEST row marking the cheapest payment.">
+  <div class="shot-cap">Buckets for the Chaotic Omens, priced in Exalted / Chaos / Divine - the green <b>BEST</b> row is the cheapest option.</div>
+
+  <details>
+    <summary>What is a bucket?</summary>
+    <div class="body">
+      <p>A bucket is a currency you want to <b>buy</b> - think of it as an <b>"I WANT this"</b> pile. The rows inside
+      it are the currencies you could <b>pay with</b>. In the example above, each bucket is an <b>Omen</b> and the rows
+      (Exalted, Chaos, Divine) are the ways to pay for it.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>What do the numbers on each row mean?</summary>
+    <div class="body">
+      <img class="shot" src="img/row-example.png" alt="A single currency row: Exalted Orb marked BEST, with its 7-day trend, price and ratio, traded volume, and an arbitrage percentage." style="max-width:100%;">
+      <div class="shot-cap">A single row - the Exalted Orb pay option, marked <b>BEST</b>.</div>
+      <p>Reading it left to right:</p>
+      <p><b>Name + badge</b> - the pay currency. A green <b>BEST</b> badge marks the cheapest option with its edge over the next; a red <b>&minus;%</b> on the others is how much more they cost.<br>
+      <b>7D trend</b> - the pair's 7-day price sparkline and change (hover it in-app for day-by-day history).<br>
+      <b>Price (+ ratio)</b> - how many of that currency equal 1 of the bucket's, from live data, with the whole-number <b>ratio</b> beneath, as Ange shows it.<br>
+      <b>Vol</b> - how much of the pair is actually trading; thin pairs are flagged and kept out of arbitrage routes.<br>
+      <span class="green"><b>Arb %</b></span> - green, shown when a profitable trade loop exists from that row.<br>
+      <span class="blue"><b>&#9998; pencil</b></span> - on hover, click to type your own rate for that pair (see manual rates below).</p>
+      <p>A <b>&#9888;</b> next to a ratio means that pair's trade data is lagging a fast market - trust the main price and verify in game.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>What is the green <b>BEST</b> row?</summary>
+    <div class="body">
+      <p>The row highlighted green with a <b>BEST</b> badge is the <b>cheapest way to buy</b> the bucket's currency right
+      now. Its <b>(+%)</b> shows the edge over the next-best option; red <b>(&minus;%)</b> badges on the other rows show
+      how much more each alternative costs.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>What is the green arb %?</summary>
+    <div class="body">
+      <p>A <b>profitable loop</b> from that row - shown only when every leg is tradable now and it clears <b>+2%</b>.
+      <b>Hover</b> for the trades in order, <b>click</b> to pin it. From a pinned route you can <b>&#9998; fix any leg's rate</b>
+      to the number you see in game, and <b>copy</b> the whole route to chat.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>What are manual rates?</summary>
+    <div class="body">
+      <p>Feed data can lag. In <b>Settings &rarr; Rates</b> (or the blue <span class="blue">&#9998;</span> on any row),
+      each grey cell shows the live rate; type over it as Ange shows it - fractions like <code>1/4</code> and ratios
+      like <code>1:4</code> work - to <b>override</b> that pair (it turns blue). Blank cells stay live. Your rates
+      drive the arbitrage math, so filling the grid sharpens every route.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>Why would I exclude Exalted from arbitrage?</summary>
+    <div class="body">
+      <p>Ange charges gold <b>per unit</b> traded, not per value. Because Exalted is low-value, a loop that routes
+      through it moves <b>thousands</b> of units and drains your gold. <b>Settings</b> has a checkbox to skip Exalted as
+      an intermediate hop when building routes.</p>
+    </div>
+  </details>
+
+  <h2 class="sect">General</h2>
+
+  <details>
+    <summary>How do I move, resize, or re-key the overlay?</summary>
+    <div class="body">
+      <p><b>Drag the title bar</b> to move it, <b>drag the edges</b> to resize. Press your hotkey (<b>F6</b> by default)
+      to show/hide, or <b>Esc</b> to hide. Change the hotkey and the UI scale in <b>Settings</b>.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>Where do the prices come from?</summary>
+    <div class="body">
+      <p>Currency rates come from <b>GGG's official Currency Exchange data</b> - real executed trades - topped with the
+      <b>live trade-site order book</b> for the pairs on your screen, so numbers match what you can actually execute.
+      Item price checks search the official trade site. The community <b>poe2scout.com</b> API supplies icons, history
+      and fallback. No game memory hooks - it is just an overlay window reading public data. Your game must be in
+      <b>Windowed</b> or <b>Windowed Fullscreen</b> mode.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>Is logging in safe? How are credentials handled?</summary>
+    <div class="body">
+      <p><b>The app never sees your password.</b> Logging in (optional - it unlocks exact weighted item searches) opens
+      <b>pathofexile.com's own login page</b> in a sandboxed window: credentials go directly to GGG (or Steam, with 2FA
+      working normally) over HTTPS, and the page has no access to the app, nor the app to the page.</p>
+      <p>All the app keeps is the resulting <b>session cookie</b>, stored OS-encrypted on your machine (the same
+      mechanism Chrome uses) and sent only to pathofexile.com. It never leaves your computer. This is the identical
+      trust model to being logged into the trade site in your browser - and the whole app is
+      <a class="gh" href="https://github.com/POE2-VibeTools/poe2-currency-overlay">open source</a>, so you can verify
+      every line.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>I found a bug / have an idea.</summary>
+    <div class="body">
+      <p>Use the <b>Bug</b> or <b>Feedback</b> buttons in the overlay's footer - they submit straight to us (bug reports
+      include a short activity log to help us debug). Thank you!</p>
+    </div>
+  </details>
+
+  <footer>GPL-3.0 licensed. Prices via GGG's official exchange data + poe2scout.com. Item parser adapted from Exiled
+  Exchange 2 (MIT). Not affiliated with Grinding Gear Games.<br>
+  <a class="gh" href="https://github.com/POE2-VibeTools/poe2-currency-overlay">GitHub</a></footer>
+</main>
+</body>
+</html>

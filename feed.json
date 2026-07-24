@@ -1,0 +1,4 @@
+{
+  "apiBase": null,
+  "_comment": "Remote data-source switch. Set apiBase to the deployed Worker URL (e.g. https://poe2-overlay-api.example.workers.dev) and every installed app switches to the live service feed within 15 minutes. Set back to null to revert everyone to the public API."
+}

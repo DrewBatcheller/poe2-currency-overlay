@@ -1,0 +1,269 @@
+import { CLIENT_STRINGS as _$ } from "@/assets/data";
+import type { ParsedStat } from "./stat-translations";
+import { ModifierType } from "./modifiers";
+import { removeLinesEnding } from "./Parser";
+
+export const SCOURGE_LINE = " (scourge)";
+export const AUGMENT_LINE = " (rune)";
+export const ADDED_AUGMENT_LINE = " (added rune)";
+export const ENCHANT_LINE = " (enchant)";
+export const IMPLICIT_LINE = " (implicit)";
+export const DESECRATED_LINE = " (desecrated)";
+const CRAFTED_LINE = " (crafted)";
+const FRACTURED_LINE = " (fractured)";
+
+export interface ParsedModifier {
+  info: ModifierInfo;
+  stats: ParsedStat[];
+}
+
+export interface ModifierInfo {
+  type: ModifierType;
+  generation?: "suffix" | "prefix" | "corrupted" | "eldritch" | "mutated";
+  name?: string;
+  tier?: number;
+  rank?: number;
+  tags: string[];
+  rollIncr?: number;
+  hybridWithRef?: Set<string>;
+}
+
+export function parseModInfoLine(
+  line: string,
+  type: ModifierType,
+): ModifierInfo {
+  const [modText, xText2, xText3] = line
+    .slice(1, -1)
+    .split("\u2014")
+    .map((_) => _.trim());
+
+  let generation: ModifierInfo["generation"];
+  let name: ModifierInfo["name"];
+  let tier: ModifierInfo["tier"];
+  let rank: ModifierInfo["rank"];
+
+  if (_$.EATER_IMPLICIT.test(modText) || _$.EXARCH_IMPLICIT.test(modText)) {
+    const match =
+      modText.match(_$.EATER_IMPLICIT) ?? modText.match(_$.EXARCH_IMPLICIT)!;
+    generation = "eldritch";
+    switch (match.groups!.rank) {
+      case _$.ELDRITCH_MOD_R1:
+        rank = 1;
+        break;
+      case _$.ELDRITCH_MOD_R2:
+        rank = 2;
+        break;
+      case _$.ELDRITCH_MOD_R3:
+        rank = 3;
+        break;
+      case _$.ELDRITCH_MOD_R4:
+        rank = 4;
+        break;
+      case _$.ELDRITCH_MOD_R5:
+        rank = 5;
+        break;
+      case _$.ELDRITCH_MOD_R6:
+        rank = 6;
+        break;
+    }
+  } else {
+    const match = modText.match(_$.MODIFIER_LINE);
+    if (!match) {
+      throw new Error("Invalid regex for mod info line");
+    }
+    if (match.groups!.type.startsWith(_$.FRACTURED_MODIFIER)) {
+      match.groups!.type = match
+        .groups!.type.slice(_$.FRACTURED_MODIFIER.length)
+        .trim();
+      type = ModifierType.Fractured;
+    }
+    // mostly for spanish
+    else if (match.groups!.type2?.startsWith(_$.FRACTURED_MODIFIER)) {
+      match.groups!.type2 = match
+        .groups!.type2.slice(_$.FRACTURED_MODIFIER.length)
+        .trim();
+      type = ModifierType.Fractured;
+    }
+
+    if (match.groups!.type.startsWith(_$.DESECRATED_MODIFIER)) {
+      match.groups!.type = match
+        .groups!.type.slice(_$.DESECRATED_MODIFIER.length)
+        .trim();
+      if (type !== ModifierType.Fractured) {
+        type = ModifierType.Desecrated;
+      }
+    } else if (match.groups!.type.startsWith(_$.CRAFTED_MODIFIER)) {
+      match.groups!.type = match
+        .groups!.type.slice(_$.CRAFTED_MODIFIER.length)
+        .trim();
+      if (type !== ModifierType.Fractured) {
+        type = ModifierType.Crafted;
+      }
+    }
+    // mostly for spanish
+    else if (match.groups!.type2?.startsWith(_$.DESECRATED_MODIFIER)) {
+      match.groups!.type2 = match
+        .groups!.type2.slice(_$.DESECRATED_MODIFIER.length)
+        .trim();
+      if (type !== ModifierType.Fractured) {
+        type = ModifierType.Desecrated;
+      }
+    } else if (match.groups!.type2?.startsWith(_$.CRAFTED_MODIFIER)) {
+      match.groups!.type2 = match
+        .groups!.type2.slice(_$.CRAFTED_MODIFIER.length)
+        .trim();
+      if (type !== ModifierType.Fractured) {
+        type = ModifierType.Crafted;
+      }
+    }
+
+    switch (match.groups!.type) {
+      case _$.PREFIX_MODIFIER:
+        generation = "prefix";
+        break;
+      case _$.SUFFIX_MODIFIER:
+        generation = "suffix";
+        break;
+      case _$.CORRUPTED_MODIFIER:
+      case _$.CORRUPTED_IMPLICIT:
+        generation = "corrupted";
+        type = ModifierType.Enchant;
+        break;
+      case _$.IMPLICIT_MODIFIER:
+        type = ModifierType.Implicit;
+        break;
+      case _$.ENCHANT_MODIFIER:
+        type = ModifierType.Enchant;
+        break;
+      case _$.VAAL_UNIQUE_MODIFIER:
+        generation = "mutated";
+    }
+
+    name = match.groups!.name || undefined;
+    tier = Number(match.groups!.tier) || undefined;
+    rank = Number(match.groups!.rank) || undefined;
+  }
+
+  let tags: ModifierInfo["tags"];
+  let rollIncr: ModifierInfo["rollIncr"];
+  {
+    const incrText =
+      xText3 !== undefined
+        ? xText3
+        : xText2 !== undefined && _$.MODIFIER_INCREASED.test(xText2)
+          ? xText2
+          : undefined;
+
+    const tagsText =
+      xText2 !== undefined && incrText !== xText2 ? xText2 : undefined;
+
+    tags = tagsText ? tagsText.split(", ") : [];
+    rollIncr = incrText
+      ? Number(_$.MODIFIER_INCREASED.exec(incrText)![1])
+      : undefined;
+  }
+
+  return { type, generation, name, tier, rank, tags, rollIncr };
+}
+
+export function isModInfoLine(line: string): boolean {
+  return line.startsWith("{") && line.endsWith("}");
+}
+
+interface GroupedModLines {
+  modLine: string;
+  statLines: string[];
+}
+
+export function* groupLinesByMod(
+  lines: string[],
+): Generator<GroupedModLines, void> {
+  if (!lines.length || !isModInfoLine(lines[0])) {
+    return;
+  }
+
+  let last: GroupedModLines | undefined;
+  for (const line of lines) {
+    if (!isModInfoLine(line)) {
+      last!.statLines.push(line);
+    } else {
+      if (last) {
+        yield last;
+      }
+      last = { modLine: line, statLines: [] };
+    }
+  }
+  yield last!;
+}
+
+export function parseModType(lines: string[]): {
+  modType: ModifierType;
+  lines: string[];
+} {
+  let modType: ModifierType;
+  if (lines[0] === _$.VEILED_PREFIX || lines[0] === _$.VEILED_SUFFIX) {
+    modType = ModifierType.Veiled;
+  } else if (lines.some((line) => line.endsWith(SCOURGE_LINE))) {
+    modType = ModifierType.Scourge;
+    lines = removeLinesEnding(lines, SCOURGE_LINE);
+  } else if (lines.some((line) => line.endsWith(ENCHANT_LINE))) {
+    modType = ModifierType.Enchant;
+    lines = removeLinesEnding(lines, ENCHANT_LINE);
+  } else if (lines.some((line) => line.endsWith(IMPLICIT_LINE))) {
+    modType = ModifierType.Implicit;
+    lines = removeLinesEnding(lines, IMPLICIT_LINE);
+  } else if (lines.some((line) => line.endsWith(FRACTURED_LINE))) {
+    modType = ModifierType.Fractured;
+    lines = removeLinesEnding(lines, FRACTURED_LINE);
+  } else if (lines.some((line) => line.endsWith(CRAFTED_LINE))) {
+    modType = ModifierType.Crafted;
+    lines = removeLinesEnding(lines, CRAFTED_LINE);
+  } else if (lines.some((line) => line.endsWith(AUGMENT_LINE))) {
+    modType = ModifierType.Augment;
+    lines = removeLinesEnding(lines, AUGMENT_LINE);
+  } else if (lines.some((line) => line.endsWith(ADDED_AUGMENT_LINE))) {
+    modType = ModifierType.AddedAugment;
+    lines = removeLinesEnding(lines, ADDED_AUGMENT_LINE);
+  } else if (lines.some((line) => line.endsWith(DESECRATED_LINE))) {
+    modType = ModifierType.Desecrated;
+    lines = removeLinesEnding(lines, DESECRATED_LINE);
+  } else {
+    modType = ModifierType.Explicit;
+  }
+
+  return { modType, lines };
+}
+
+// stat values internally stored as ints,
+// this is the most common formatter
+const DIV_BY_100 = 2;
+
+export function applyIncr(
+  mod: ModifierInfo,
+  parsed: ParsedStat,
+): ParsedStat | null {
+  const { rollIncr } = mod;
+  const { roll } = parsed;
+
+  if (!rollIncr || !roll || roll.unscalable) {
+    return null;
+  }
+
+  return {
+    stat: parsed.stat,
+    translation: parsed.translation,
+    roll: {
+      unscalable: roll.unscalable,
+      dp: roll.dp,
+      value: incrRoll(roll.value, rollIncr, roll.dp ? DIV_BY_100 : 0),
+      min: incrRoll(roll.min, rollIncr, roll.dp ? DIV_BY_100 : 0),
+      max: incrRoll(roll.max, rollIncr, roll.dp ? DIV_BY_100 : 0),
+    },
+  };
+}
+
+export function incrRoll(value: number, p: number, dp: number): number {
+  const res = value + (value * p) / 100;
+  const rounding = Math.pow(10, dp);
+  return Math.trunc((res + Number.EPSILON) * rounding) / rounding;
+}

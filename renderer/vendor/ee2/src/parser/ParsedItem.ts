@@ -1,0 +1,147 @@
+import type { ModifierType, StatCalculated } from "./modifiers";
+import type { ParsedModifier } from "./advanced-mod-desc";
+import type { BaseType } from "@/assets/data";
+import { ItemCategory } from "./meta";
+
+export enum ItemRarity {
+  Normal = "Normal",
+  Magic = "Magic",
+  Rare = "Rare",
+  Unique = "Unique",
+}
+
+export enum ItemInfluence {
+  Crusader = "Crusader",
+  Elder = "Elder",
+  Hunter = "Hunter",
+  Redeemer = "Redeemer",
+  Shaper = "Shaper",
+  Warlord = "Warlord",
+}
+
+// export interface Augment {
+//   index: number;
+//   isEmpty: boolean;
+//   augment?: string;
+//   text?: string; // Text of modifier
+//   isFake?: boolean;
+//   modifier?: ParsedModifier; // @deprecated
+//   statCalculated?: StatCalculated; // @deprecated
+// }
+
+export interface ParsedItem {
+  rarity?: ItemRarity;
+  itemLevel?: number;
+  armourAR?: number;
+  armourEV?: number;
+  armourES?: number;
+  armourRW?: number;
+  armourBLOCK?: number;
+  basePercentile?: number;
+  weaponCRIT?: number;
+  weaponAS?: number;
+  weaponPHYSICAL?: number;
+  weaponELEMENTAL?: number;
+  weaponFIRE?: number;
+  weaponCOLD?: number;
+  weaponLIGHTNING?: number;
+  weaponCHAOS?: number;
+  weaponRELOAD?: number;
+  weaponSPIRIT?: number;
+  mapBlighted?: "Blighted" | "Blight-ravaged";
+  mapTier?: number;
+  mapPackSize?: number;
+  mapItemRarity?: number;
+  mapRevives?: number;
+  mapDropChance?: number;
+  // doesn't exist in 0.5.2
+  mapMagicMonsters?: number;
+  // doesn't exist in 0.5.2
+  mapRareMonsters?: number;
+  // doesn't exist in 0.5.2
+  mapGold?: number;
+  mapMonsterRarity?: number;
+  mapEffectiveness?: number;
+  gemLevel?: number;
+  areaLevel?: number;
+  talismanTier?: number;
+  quality?: number;
+  augmentSockets?: {
+    empty: number;
+    current: number;
+    normal: number;
+  };
+  gemSockets?: {
+    number: number;
+    linked?: number; // only 5 or 6
+    white: number;
+  };
+  stackSize?: { value: number; max: number };
+  isUnidentified: boolean;
+  isCorrupted: boolean;
+  isUnmodifiable?: boolean;
+  isMirrored?: boolean;
+  isSanctified?: boolean;
+  influences: ItemInfluence[];
+  logbookAreaMods?: ParsedModifier[][];
+  sentinelCharge?: number;
+  isSynthesised?: boolean;
+  isFractured?: boolean;
+  isVeiled?: boolean;
+  isFoil?: boolean;
+  statsByType: StatCalculated[];
+  newMods: ParsedModifier[];
+  unknownModifiers: Array<{
+    text: string;
+    type: ModifierType;
+  }>;
+  heist?: {
+    wingsRevealed?: number;
+    target?: "Enchants" | "Trinkets" | "Gems" | "Replicas";
+  };
+  note?: string;
+  category?: ItemCategory;
+  requires?: {
+    level: number;
+    str: number;
+    dex: number;
+    int: number;
+  };
+  unidentifiedTier?: number;
+  trials?: {
+    numberOfTrials?: number;
+    ultimatumHint?: "Victorious" | "Cowardly" | "Deadly";
+  };
+  info: BaseType;
+  rawText: string;
+}
+
+// NOTE: should match option values on trade
+export enum IncursionRoom {
+  Open = 1,
+  Obstructed = 2,
+}
+
+export function createVirtualItem(
+  props: Partial<ParsedItem> & Pick<ParsedItem, "info">,
+): ParsedItem {
+  return {
+    ...props,
+    isUnidentified: props.isUnidentified ?? false,
+    isCorrupted: props.isCorrupted ?? false,
+    newMods: props.newMods ?? [],
+    statsByType: props.statsByType ?? [],
+    unknownModifiers: props.unknownModifiers ?? [],
+    influences: props.influences ?? [],
+    rawText: "VIRTUAL_ITEM",
+  };
+}
+
+export function itemIsModifiable(item: ParsedItem) {
+  return (
+    item.info.craftable &&
+    !item.isCorrupted &&
+    !item.isMirrored &&
+    !item.isSanctified
+  );
+}

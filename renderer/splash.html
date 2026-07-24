@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'" />
+  <style>
+    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
+                 font-family: "Segoe UI", system-ui, sans-serif; user-select: none; }
+    .wrap { height: 100%; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 14px; opacity: 1; transition: opacity .45s ease;
+            /* rich dark card that melts to transparency at the edges - keeps the
+               text readable over any background without hard rectangle borders */
+            background: radial-gradient(closest-side,
+              rgba(24, 19, 13, 0.97) 0%,
+              rgba(28, 21, 13, 0.94) 45%,
+              rgba(24, 18, 12, 0.85) 68%,
+              rgba(20, 15, 10, 0.5) 85%,
+              rgba(20, 15, 10, 0) 100%); }
+    .wrap.out { opacity: 0; }
+    img { width: 96px; height: 96px; filter: drop-shadow(0 6px 24px rgba(214, 126, 44, .55)); }
+    h1 { font-size: 15px; color: #f0dcae; margin: 0; font-weight: 600; letter-spacing: .02em;
+         text-shadow: 0 1px 4px rgba(0, 0, 0, .9); }
+    .bar { width: 180px; height: 3px; background: rgba(214, 126, 44, .25); border-radius: 2px; overflow: hidden; }
+    .fill { height: 100%; width: 0%; background: linear-gradient(90deg, #d69a3e, #f0d9a8);
+            border-radius: 2px; transition: width .35s ease; box-shadow: 0 0 6px rgba(232, 200, 138, .5); }
+    .ver { font-size: 10px; color: #9a927e; margin-top: -8px; letter-spacing: .04em;
+           text-shadow: 0 1px 3px rgba(0, 0, 0, .9); }
+    .msg { font-size: 11.5px; color: #ddd6c6; height: 16px; opacity: 0; transition: opacity .35s ease;
+           text-shadow: 0 1px 3px rgba(0, 0, 0, .9); }
+    .msg.show { opacity: 1; }
+    .msg b { color: #f0d9a8; }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="wrap">
+    <img src="icon.png" alt="" />
+    <h1>POE2 Currency Overlay</h1>
+    <div class="ver" id="ver"></div>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+    <div class="msg" id="msg"></div>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const hotkey = (params.get('hotkey') || 'F6').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const ver = (params.get('version') || '').replace(/[^0-9a-zA-Z.-]/g, '');
+    if (ver) document.getElementById('ver').textContent = 'v' + ver;
+    const fill = document.getElementById('fill');
+    const msg = document.getElementById('msg');
+    // soft, unhurried fill
+    const steps = [[150, '16%'], [550, '42%'], [1000, '68%'], [1500, '88%'], [1950, '100%']];
+    for (const [t, w] of steps) setTimeout(() => { fill.style.width = w; }, t);
+    setTimeout(() => {
+      msg.innerHTML = 'Press <b>' + hotkey + '</b> to toggle the overlay';
+      msg.classList.add('show');
+    }, 2100);
+    setTimeout(() => document.getElementById('wrap').classList.add('out'), 5100);
+  </script>
+</body>
+</html>
